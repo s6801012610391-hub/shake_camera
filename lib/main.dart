@@ -1,0 +1,207 @@
+import 'dart:async';
+import 'package:camera/camera.dart';
+import 'package:flutter/material.dart';
+import 'package:gal/gal.dart';
+import 'package:shake/shake.dart';
+
+List<CameraDescription> _cameras = [];
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  _cameras = await availableCameras();
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: ShakeCameraScreen(),
+    );
+  }
+}
+
+class ShakeCameraScreen extends StatefulWidget {
+  const ShakeCameraScreen({super.key});
+
+  @override
+  State<ShakeCameraScreen> createState() => _ShakeCameraScreenState();
+}
+
+class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
+  CameraController? _controller;
+  int _selectedCameraIndex = 0;
+  int _countdown = 0;
+  bool _isCountingDown = false;
+  Timer? _timer;
+  
+  ShakeDetector? _detector;
+
+  @override
+  void initState() {
+    super.initState();
+    _initCamera(_selectedCameraIndex);
+    
+    _detector = ShakeDetector.autoStart(
+      onPhoneShake: () {
+        if (!_isCountingDown && _controller != null && _controller!.value.isInitialized) {
+          _startCountdown();
+        }
+      },
+      shakeThresholdGravity: 2.7,
+    );
+  }
+
+  Future<void> _initCamera(int cameraIndex) async {
+    if (_cameras.isEmpty) return;
+    await _controller?.dispose();
+
+    _controller = CameraController(
+      _cameras[cameraIndex],
+      ResolutionPreset.high,
+      enableAudio: false,
+    );
+
+    try {
+      await _controller!.initialize();
+      if (mounted) setState(() {});
+    } catch (e) {
+      debugPrint('Error initializing camera: $e');
+    }
+  }
+
+  void _switchCamera() {
+    if (_cameras.length < 2 || _isCountingDown) return;
+    setState(() {
+      _selectedCameraIndex = (_selectedCameraIndex + 1) % _cameras.length;
+    });
+    _initCamera(_selectedCameraIndex);
+  }
+
+  void _startCountdown() {
+    setState(() {
+      _isCountingDown = true;
+      _countdown = 3;
+    });
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        if (_countdown > 1) {
+          _countdown--;
+        } else {
+          _timer?.cancel();
+          _isCountingDown = false;
+          _takePicture();
+        }
+      });
+    });
+  }
+
+  Future<void> _takePicture() async {
+    if (_controller == null || !_controller!.value.isInitialized) return;
+
+    try {
+      final XFile image = await _controller!.takePicture();
+      await Gal.putImage(image.path);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('บันทึกรูปภาพลงเครื่องเรียบร้อยแล้ว!'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error taking picture: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _detector?.stopListening();
+    _timer?.cancel();
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_controller == null || !_controller!.value.isInitialized) {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Center(child: CameraPreview(_controller!)),
+            Positioned(
+              top: 30,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    'เขย่ามือถือเพื่อถ่ายรูป',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            if (_isCountingDown)
+              Center(
+                child: Text(
+                  '$_countdown',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 100,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 10.0,
+                        color: Colors.black,
+                        offset: Offset(2.0, 2.0),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            Positioned(
+              bottom: 40,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: FloatingActionButton(
+                  onPressed: _isCountingDown ? null : _switchCamera,
+                  backgroundColor: Colors.blue,
+                  child: const Icon(
+                    Icons.switch_camera,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
