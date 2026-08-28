@@ -4,6 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+import 'soundcheck.dart';
 
 List<CameraDescription> _cameras = [];
 
@@ -18,9 +19,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: ShakeCameraScreen(),
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: const ShakeCameraScreen(),
     );
   }
 }
@@ -116,14 +120,13 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
       final XFile image = await _controller!.takePicture();
       await Gal.putImage(image.path);
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('บันทึกรูปภาพลงเครื่องเรียบร้อยแล้ว!'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('บันทึกรูปภาพลงเครื่องเรียบร้อยแล้ว!'),
+          duration: Duration(seconds: 2),
+        ),
+      );
     } catch (e) {
       debugPrint('Error taking picture: $e');
     }
@@ -151,7 +154,10 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
       body: SafeArea(
         child: Stack(
           children: [
+            // แสดงกล้อง
             Center(child: CameraPreview(_controller!)),
+
+            // ป้ายข้อความด้านบน
             Positioned(
               top: 30,
               left: 0,
@@ -174,6 +180,8 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
                 ),
               ),
             ),
+
+            // ตัวเลขนับถอยหลัง
             if (_isCountingDown)
               Center(
                 child: Text(
@@ -192,20 +200,46 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
                   ),
                 ),
               ),
+
+            // แถบปุ่มควบคุมด้านล่าง (ปุ่มสลับกล้อง + ปุ่ม Sound Check)
             Positioned(
               bottom: 40,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: FloatingActionButton(
-                  onPressed: _isCountingDown ? null : _switchCamera,
-                  backgroundColor: Colors.blue,
-                  child: const Icon(
-                    Icons.flip_camera_android,
-                    color: Colors.white,
-                    size: 30,
+              left: 20,
+              right: 20,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const SizedBox(width: 100), // ช่องว่างเพื่อดันปุ่มสลับกล้องให้อยู่ตรงกลาง
+                  FloatingActionButton(
+                    onPressed: _isCountingDown ? null : _switchCamera,
+                    backgroundColor: Colors.blue,
+                    child: const Icon(
+                      Icons.flip_camera_android,
+                      color: Colors.white,
+                      size: 30,
+                    ),
                   ),
-                ),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(58, 81, 3, 170),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const sound_record(), // หากเปลี่ยนชื่อ class ใน soundcheck.dart ให้แก้เป็น SoundRecord()
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.mic, size: 18),
+                    label: const Text('Sound Check'),
+                  ),
+                ],
               ),
             ),
           ],
