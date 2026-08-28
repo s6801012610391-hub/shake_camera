@@ -1,8 +1,9 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
-import 'package:shake/shake.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 
 List<CameraDescription> _cameras = [];
 
@@ -37,22 +38,30 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
   int _countdown = 0;
   bool _isCountingDown = false;
   Timer? _timer;
-  
-  ShakeDetector? _detector;
+
+  StreamSubscription<UserAccelerometerEvent>? _accelerometerSubscription;
+  static const double _shakeThreshold = 15.0;
+  DateTime _lastShakeTime = DateTime.now();
 
   @override
   void initState() {
     super.initState();
     _initCamera(_selectedCameraIndex);
-    
-    _detector = ShakeDetector.autoStart(
-      onPhoneShake: () {
+    _startListeningShake();
+  }
+
+  void _startListeningShake() {
+    _accelerometerSubscription = userAccelerometerEventStream().listen((UserAccelerometerEvent event) {
+      double acceleration = sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
+
+      DateTime now = DateTime.now();
+      if (acceleration > _shakeThreshold && now.difference(_lastShakeTime).inMilliseconds > 2000) {
+        _lastShakeTime = now;
         if (!_isCountingDown && _controller != null && _controller!.value.isInitialized) {
           _startCountdown();
         }
-      },
-      shakeThresholdGravity: 2.7,
-    );
+      }
+    });
   }
 
   Future<void> _initCamera(int cameraIndex) async {
@@ -122,7 +131,7 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
 
   @override
   void dispose() {
-    _detector?.stopListening();
+    _accelerometerSubscription?.cancel();
     _timer?.cancel();
     _controller?.dispose();
     super.dispose();
