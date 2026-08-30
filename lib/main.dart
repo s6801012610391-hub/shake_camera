@@ -46,6 +46,7 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
   StreamSubscription<UserAccelerometerEvent>? _accelerometerSubscription;
   double _shakeThreshold = 15.0;
   DateTime _lastShakeTime = DateTime.now();
+  ResolutionPreset _currentResolution = ResolutionPreset.high;
 
   @override
   void initState() {
@@ -68,13 +69,18 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
     });
   }
 
-  Future<void> _initCamera(int cameraIndex) async {
+  Future<void> _initCamera(int cameraIndex, {ResolutionPreset? resolution}) async {
     if (_cameras.isEmpty) return;
+
+    if (resolution != null) {
+      _currentResolution = resolution;
+    }
+
     await _controller?.dispose();
 
     _controller = CameraController(
       _cameras[cameraIndex],
-      ResolutionPreset.high,
+      _currentResolution,
       enableAudio: false,
     );
 
@@ -84,6 +90,11 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
     } catch (e) {
       debugPrint('Error initializing camera: $e');
     }
+  }
+
+  void _changeResolution(ResolutionPreset newPreset) {
+    if (_isCountingDown || _currentResolution == newPreset) return;
+      _initCamera(_selectedCameraIndex, resolution: newPreset);
   }
 
   void _switchCamera() {
@@ -235,10 +246,34 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
                   const SizedBox(height: 15),
 
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
 
-                      const SizedBox(width: 100),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.blue,
+                          shape: BoxShape.circle,
+                        ),
+                        child: PopupMenuButton<ResolutionPreset>(
+                          icon: const Icon(Icons.aspect_ratio, color: Colors.white, size: 26),
+                          tooltip: 'เลือกความละเอียด',
+                          onSelected: _changeResolution,
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: ResolutionPreset.low,
+                              child: Text('Low'),
+                            ),
+                            const PopupMenuItem(
+                              value: ResolutionPreset.medium,
+                              child: Text('Medium'),
+                            ),
+                            const PopupMenuItem(
+                              value: ResolutionPreset.high,
+                              child: Text('High'),
+                            ),
+                          ],
+                        ),
+                      ),
                       
                       FloatingActionButton(
                         onPressed: _isCountingDown ? null : _switchCamera,
