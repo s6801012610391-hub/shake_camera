@@ -206,41 +206,49 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
               bottom: 40,
               left: 20,
               right: 20,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const SizedBox(width: 100), // ช่องว่างเพื่อดันปุ่มสลับกล้องให้อยู่ตรงกลาง
-                  FloatingActionButton(
-                    onPressed: _isCountingDown ? null : _switchCamera,
-                    backgroundColor: Colors.blue,
-                    child: const Icon(
-                      Icons.flip_camera_android,
-                      color: Colors.white,
-                      size: 30,
-                    ),
-                  ),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(58, 81, 3, 170),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const sound_record(), // หากเปลี่ยนชื่อ class ใน soundcheck.dart ให้แก้เป็น SoundRecord()
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+
+                      const SizedBox(width: 100),
+                      
+                      FloatingActionButton(
+                        onPressed: _isCountingDown ? null : _switchCamera,
+                        backgroundColor: Colors.blue,
+                        child: const Icon(
+                          Icons.flip_camera_android,
+                          color: Colors.white,
+                          size: 30,
                         ),
-                      );
-                    },
-                    icon: const Icon(Icons.mic, size: 18),
-                    label: const Text('Sound Check'),
+                      ),
+
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(58, 81, 3, 170),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const sound_record(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.mic, size: 18),
+                        label: const Text('Sound Check'),
+                      ),
+                    ],
                   ),
                 ],
-              ),
+              )
             ),
           ],
         ),
