@@ -44,7 +44,7 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
   Timer? _timer;
 
   StreamSubscription<UserAccelerometerEvent>? _accelerometerSubscription;
-  static const double _shakeThreshold = 15.0;
+  double _shakeThreshold = 15.0;
   DateTime _lastShakeTime = DateTime.now();
 
   @override
@@ -201,7 +201,7 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
                 ),
               ),
 
-            // แถบปุ่มควบคุมด้านล่าง (ปุ่มสลับกล้อง + ปุ่ม Sound Check)
+            // แถบปุ่มควบคุมด้านล่าง (ปุ่มสลับกล้อง + ปุ่ม Sound Check + Slider)
             Positioned(
               bottom: 40,
               left: 20,
@@ -209,6 +209,31 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  Text(
+                    'ความแรงในการเขย่า: ${_shakeThreshold.toStringAsFixed(1)}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      shadows: [Shadow(blurRadius: 4, color: Colors.black)],
+                    ),
+                  ),
+                  
+                  Slider(
+                    value: _shakeThreshold,
+                    min: 5.0,
+                    max: 30.0,
+                    divisions: 25,
+                    activeColor: Colors.blue,
+                    inactiveColor: Colors.white60,
+                    onChanged: (double value) {
+                      setState(() {
+                        _shakeThreshold = value;
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 15),
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
