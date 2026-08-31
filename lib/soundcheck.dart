@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart'; 
 import 'package:audioplayers/audioplayers.dart';
 import 'dart:io';
+import 'main.dart';
 
 void main() {
   runApp(const MainApp());
@@ -32,6 +33,7 @@ class sound_record extends StatefulWidget {
   State<sound_record> createState() => _sound_recordState();
 }
 
+enum AudioQuality { low, medium, high }
 class _sound_recordState extends State<sound_record> {
   final AudioRecorder _audioRecorder = AudioRecorder();
   bool _isRecording = false;
@@ -43,11 +45,35 @@ class _sound_recordState extends State<sound_record> {
   Duration _duration = Duration.zero; // ความยาวไฟล์เสียง
   Duration _position = Duration.zero; // ตำแหน่งเวลา
 
+  AudioQuality _selectedQuality = AudioQuality.high;
+
   Future<void> startRecording() async {
     if (await _audioRecorder.hasPermission()) {
+      int bitRate;
+      int sampleRate;
+
+      switch (_selectedQuality) {
+        case AudioQuality.low:
+          bitRate = 32000;
+          sampleRate = 16000;
+          break;
+        case AudioQuality.medium:
+          bitRate = 96000;
+          sampleRate = 44100;
+          break;
+        case AudioQuality.high:
+          bitRate = 192000;
+          sampleRate = 48000;
+          break;
+      }
+
       if (kIsWeb) {
         await _audioRecorder.start(
-          const RecordConfig(encoder: AudioEncoder.opus), 
+          RecordConfig(
+            encoder: AudioEncoder.opus,
+            bitRate: bitRate,
+            sampleRate: sampleRate,
+          ), 
           path: '',
         );
       } else {
@@ -70,7 +96,11 @@ class _sound_recordState extends State<sound_record> {
       }
 
       await _audioRecorder.start(
-        const RecordConfig(encoder: AudioEncoder.aacLc), 
+        RecordConfig(
+          encoder: AudioEncoder.aacLc,
+          bitRate: bitRate,
+          sampleRate: sampleRate,
+        ), 
         path: path,
       );
     }
@@ -148,6 +178,7 @@ Future<void> stopRecording() async {
   Widget build(BuildContext context) {
     final double maxSeconds = _duration.inSeconds.toDouble();
     final double currentSeconds = _position.inSeconds.toDouble();
+       
 
     return Scaffold(
       body:Center(
@@ -156,18 +187,44 @@ Future<void> stopRecording() async {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               IconButton(
-                iconSize: 72,
+                iconSize: 40,
                 icon: const Icon(Icons.arrow_back),
                 onPressed:(){
                   Navigator.pop(
                     context
                   );
-                }),
+                 }),
             ]
           ),
 
+          DropdownButton<AudioQuality>(
+            value: _selectedQuality,
+            items: const [
+                        DropdownMenuItem(
+                          value: AudioQuality.low,
+                          child: Text('Low Quality (32 kbps)'),
+                        ),
+                        DropdownMenuItem(
+                          value: AudioQuality.medium,
+                          child: Text('Medium Quality (96 kbps)'),
+                        ),
+                        DropdownMenuItem(
+                          value: AudioQuality.high,
+                          child: Text('High Quality (192 kbps)'),
+                        ),
+                    ],
+            onChanged: _isRecording ? null:(AudioQuality? newValue){
+              if(newValue != null){
+                setState(() {
+                  _selectedQuality = newValue;
+                });
+              }
+            }
+          ),
+          
           IconButton(
             icon: Icon(Icons.mic),
             iconSize: 42.0, // Adjust size
