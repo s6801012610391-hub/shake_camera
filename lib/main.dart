@@ -47,6 +47,7 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
   double _shakeThreshold = 15.0;
   DateTime _lastShakeTime = DateTime.now();
   ResolutionPreset _currentResolution = ResolutionPreset.high;
+  int _selectedCountdownSeconds = 3;
 
   @override
   void initState() {
@@ -63,7 +64,7 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
       if (acceleration > _shakeThreshold && now.difference(_lastShakeTime).inMilliseconds > 2000) {
         _lastShakeTime = now;
         if (!_isCountingDown && _controller != null && _controller!.value.isInitialized) {
-          _startCountdown();
+          _startCountdown(_selectedCountdownSeconds);
         }
       }
     });
@@ -105,10 +106,10 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
     _initCamera(_selectedCameraIndex);
   }
 
-  void _startCountdown() {
+  void _startCountdown(int currentTimerSeconds) {
     setState(() {
       _isCountingDown = true;
-      _countdown = 3;
+      _countdown = currentTimerSeconds;
     });
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -121,6 +122,20 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
           _takePicture();
         }
       });
+    });
+  }
+
+  void _incrementTimer() {
+    if (_isCountingDown || _selectedCountdownSeconds >= 10) return;
+    setState(() {
+      _selectedCountdownSeconds++;
+    });
+  }
+
+  void _decrementTimer() {
+    if (_isCountingDown || _selectedCountdownSeconds <= 3) return;
+    setState(() {
+      _selectedCountdownSeconds--;
     });
   }
 
@@ -174,20 +189,82 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
               left: 0,
               right: 0,
               child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.blue,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text(
-                    'เขย่ามือถือเพื่อถ่ายรูป',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        'เขย่ามือถือเพื่อถ่ายรูป',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
+
+                    SizedBox(height: 10,),
+
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+
+                          // ปุ่มลด
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: Icon(
+                              Icons.remove,
+                              color: (_isCountingDown || _selectedCountdownSeconds <= 3)
+                                  ? Colors.white30
+                                  : Colors.white,
+                            ),
+                            onPressed: (_isCountingDown || _selectedCountdownSeconds <= 3)? null : _decrementTimer,
+                          ),
+
+                          const Icon(
+                            Icons.timer_outlined,
+                            color: Colors.white,
+                            size: 16.0,
+                          ),
+
+                          Text(
+                            '${_selectedCountdownSeconds}s',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            )
+                          ),
+
+                          // ปุ่มเพิ่ม
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: Icon(
+                              Icons.add,
+                              color: (_isCountingDown || _selectedCountdownSeconds >= 10)
+                                  ? Colors.white30
+                                  : Colors.white,
+                            ),
+                            onPressed: (_isCountingDown || _selectedCountdownSeconds >= 10)? null : _incrementTimer,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ]
                 ),
               ),
             ),
