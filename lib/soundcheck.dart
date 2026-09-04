@@ -4,7 +4,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart'; 
 import 'package:audioplayers/audioplayers.dart';
 import 'dart:io';
-import 'main.dart';
 
 void main() {
   runApp(const MainApp());
@@ -54,12 +53,12 @@ class _sound_recordState extends State<sound_record> {
 
       switch (_selectedQuality) {
         case AudioQuality.low:
-          bitRate = 32000;
-          sampleRate = 16000;
+          bitRate = 24000;
+          sampleRate = 8000;
           break;
         case AudioQuality.medium:
-          bitRate = 96000;
-          sampleRate = 44100;
+          bitRate = 68000;
+          sampleRate = 24000;
           break;
         case AudioQuality.high:
           bitRate = 192000;
