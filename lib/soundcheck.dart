@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
@@ -43,6 +44,9 @@ class _sound_recordState extends State<sound_record> {
 
   Duration _duration = Duration.zero; // ความยาวไฟล์เสียง
   Duration _position = Duration.zero; // ตำแหน่งเวลา
+
+  Timer? _recordTimer;
+  int _recordDuration = 0;
 
   AudioQuality _selectedQuality = AudioQuality.high;
 
@@ -105,13 +109,24 @@ class _sound_recordState extends State<sound_record> {
     }
       setState(() {
         _isRecording = true;
+        _recordDuration = 0;
       });
+
+      _recordTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        setState(() {
+          _recordDuration++;
+        });
+      });
+      
     }
   }
 
 Future<void> stopRecording() async {
   // หยุดบันทึกและรับ Path/URL ของไฟล์
   final path = await _audioRecorder.stop();
+
+  _recordTimer?.cancel();
+
   setState(() {
     _audioPath = path; 
     _isRecording = false;
@@ -223,6 +238,18 @@ Future<void> stopRecording() async {
               }
             }
           ),
+
+          if (_isRecording) ...[
+              const SizedBox(height: 10),
+              Text(
+                formatDuration(Duration(seconds: _recordDuration)),
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red,
+                ),
+              ),
+            ],
           
           IconButton(
             icon: Icon(Icons.mic),
