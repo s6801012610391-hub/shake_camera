@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart'; 
 import 'package:audioplayers/audioplayers.dart';
 import 'dart:io';
+import 'main.dart';
 
 void main() {
   runApp(const MainApp());
@@ -207,8 +208,11 @@ Future<void> stopRecording() async {
                 iconSize: 40,
                 icon: const Icon(Icons.arrow_back),
                 onPressed:(){
-                  Navigator.pop(
-                    context
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ShakeCameraScreen(),
+                    ),
                   );
                  }),
             ]

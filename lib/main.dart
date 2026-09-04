@@ -372,7 +372,7 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
                           ),
                         ),
                         onPressed: () {
-                          Navigator.push(
+                          Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
                               builder: (context) => const sound_record(),
