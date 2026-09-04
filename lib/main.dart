@@ -44,7 +44,7 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
   Timer? _timer;
 
   StreamSubscription<UserAccelerometerEvent>? _accelerometerSubscription;
-  double _shakeThreshold = 15.0;
+  double _shakeThreshold = 15;
   DateTime _lastShakeTime = DateTime.now();
   ResolutionPreset _currentResolution = ResolutionPreset.high;
   int _selectedCountdownSeconds = 3;
@@ -298,7 +298,7 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'ความแรงในการเขย่า: ${_shakeThreshold.toStringAsFixed(1)}',
+                    'ความแรงในการเขย่า: ${_shakeThreshold.toInt()}',
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
