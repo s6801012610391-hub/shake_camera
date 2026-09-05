@@ -4,6 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+import 'camera_settings_screen.dart';
 import 'soundcheck.dart';
 
 List<CameraDescription> _cameras = [];
@@ -95,11 +96,6 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
     }
   }
 
-  void _changeResolution(ResolutionPreset newPreset) {
-    if (_isCountingDown || _currentResolution == newPreset) return;
-      _initCamera(_selectedCameraIndex, resolution: newPreset);
-  }
-
   void _switchCamera() {
     if (_cameras.length < 2 || _isCountingDown) return;
     setState(() {
@@ -124,20 +120,6 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
           _takePicture();
         }
       });
-    });
-  }
-
-  void _incrementTimer() {
-    if (_isCountingDown || _selectedCountdownSeconds >= 10) return;
-    setState(() {
-      _selectedCountdownSeconds++;
-    });
-  }
-
-  void _decrementTimer() {
-    if (_isCountingDown || _selectedCountdownSeconds <= 3) return;
-    setState(() {
-      _selectedCountdownSeconds--;
     });
   }
 
@@ -191,82 +173,20 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
               left: 0,
               right: 0,
               child: Center(
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.blue,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Text(
-                        'เขย่ามือถือเพื่อถ่ายรูป',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    'เขย่ามือถือเพื่อถ่ายรูป',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
-
-                    SizedBox(height: 10,),
-
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-
-                          // ปุ่มลด
-                          IconButton(
-                            visualDensity: VisualDensity.compact,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            icon: Icon(
-                              Icons.remove,
-                              color: (_isCountingDown || _selectedCountdownSeconds <= 3)
-                                  ? Colors.white30
-                                  : Colors.white,
-                            ),
-                            onPressed: (_isCountingDown || _selectedCountdownSeconds <= 3)? null : _decrementTimer,
-                          ),
-
-                          const Icon(
-                            Icons.timer_outlined,
-                            color: Colors.white,
-                            size: 16.0,
-                          ),
-
-                          Text(
-                            '${_selectedCountdownSeconds}s',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            )
-                          ),
-
-                          // ปุ่มเพิ่ม
-                          IconButton(
-                            visualDensity: VisualDensity.compact,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            icon: Icon(
-                              Icons.add,
-                              color: (_isCountingDown || _selectedCountdownSeconds >= 10)
-                                  ? Colors.white30
-                                  : Colors.white,
-                            ),
-                            onPressed: (_isCountingDown || _selectedCountdownSeconds >= 10)? null : _incrementTimer,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ]
+                  ),
                 ),
               ),
             ),
@@ -291,103 +211,89 @@ class _ShakeCameraScreenState extends State<ShakeCameraScreen> {
                 ),
               ),
 
-            // แถบปุ่มควบคุมด้านล่าง (ปุ่มสลับกล้อง + ปุ่ม Sound Check + Slider)
+            // แถบปุ่มควบคุมด้านล่าง (ปุ่มตั้งค่า + ปุ่มสลับกล้อง + ปุ่ม Sound Check)
             Positioned(
               bottom: 40,
               left: 20,
               right: 20,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'ความแรงในการเขย่า: ${_shakeThresholdPercentage.toInt()}%',
-                    style: const TextStyle(
+                  // ปุ่มตั้งค่า (เปิดหน้า SettingsScreen)
+                  FloatingActionButton(
+                    heroTag: 'settings_btn',
+                    onPressed: _isCountingDown
+                        ? null
+                        : () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SettingsScreen(
+                                  shakeThresholdPercentage: _shakeThresholdPercentage,
+                                  countdownSeconds: _selectedCountdownSeconds,
+                                  resolution: _currentResolution,
+                                  onShakeThresholdChanged: (val) {
+                                    setState(() {
+                                      _shakeThresholdPercentage = val;
+                                    });
+                                  },
+                                  onCountdownChanged: (val) {
+                                    setState(() {
+                                      _selectedCountdownSeconds = val;
+                                    });
+                                  },
+                                  onResolutionChanged: (preset) {
+                                    if (_currentResolution != preset) {
+                                      _initCamera(_selectedCameraIndex, resolution: preset);
+                                    }
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                    backgroundColor: Colors.blue,
+                    child: const Icon(
+                      Icons.settings,
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      shadows: [Shadow(blurRadius: 4, color: Colors.black)],
+                      size: 28,
                     ),
                   ),
-                  
-                  Slider(
-                    value: _shakeThresholdPercentage,
-                    min: 10.0,
-                    max: 100.0,
-                    divisions: 18,
-                    activeColor: Colors.blue,
-                    inactiveColor: Colors.white60,
-                    onChanged: (double newValue) {
-                      setState(() {
-                        _shakeThresholdPercentage = newValue;
-                      });
-                    },
+
+                  // ปุ่มสลับกล้อง
+                  FloatingActionButton(
+                    heroTag: 'switch_camera_btn',
+                    onPressed: _isCountingDown ? null : _switchCamera,
+                    backgroundColor: Colors.blue,
+                    child: const Icon(
+                      Icons.flip_camera_android,
+                      color: Colors.white,
+                      size: 30,
+                    ),
                   ),
 
-                  const SizedBox(height: 15),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.blue,
-                          shape: BoxShape.circle,
-                        ),
-                        child: PopupMenuButton<ResolutionPreset>(
-                          icon: const Icon(Icons.aspect_ratio, color: Colors.white, size: 26),
-                          tooltip: 'เลือกความละเอียด',
-                          onSelected: _changeResolution,
-                          itemBuilder: (context) => [
-                            const PopupMenuItem(
-                              value: ResolutionPreset.low,
-                              child: Text('Low'),
-                            ),
-                            const PopupMenuItem(
-                              value: ResolutionPreset.medium,
-                              child: Text('Medium'),
-                            ),
-                            const PopupMenuItem(
-                              value: ResolutionPreset.high,
-                              child: Text('High'),
-                            ),
-                          ],
-                        ),
+                  // ปุ่ม Sound Check
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(58, 81, 3, 170),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      
-                      FloatingActionButton(
-                        onPressed: _isCountingDown ? null : _switchCamera,
-                        backgroundColor: Colors.blue,
-                        child: const Icon(
-                          Icons.flip_camera_android,
-                          color: Colors.white,
-                          size: 30,
+                    ),
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const sound_record(),
                         ),
-                      ),
-
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(58, 81, 3, 170),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const sound_record(),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.mic, size: 18),
-                        label: const Text('Sound Check'),
-                      ),
-                    ],
+                      );
+                    },
+                    icon: const Icon(Icons.mic, size: 18),
+                    label: const Text('Sound Check'),
                   ),
                 ],
-              )
+              ),
             ),
           ],
         ),
